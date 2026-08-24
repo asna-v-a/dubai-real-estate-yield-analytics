@@ -8,7 +8,7 @@ The question I wanted to answer: **if you're choosing where to buy a rental prop
 
 ## The data
 
-I pulled 1.77 million residential and commercial transactions directly from DLD's open data portal, covering everything registered since [portal history]. I narrowed this down to six districts that cover a spread of Dubai's market — Downtown, Marina, Business Bay, JVC, Palm Jumeirah, and Dubai Hills Estate — and filtered to residential sales only, going back to 2023. That left about 163,000 transactions to work with.
+I pulled 1.77 million residential and commercial transactions directly from DLD's open data portal, covering everything registered since from January 2023 to August 2026. I narrowed this down to six districts that cover a spread of Dubai's market — Downtown, Marina, Business Bay, JVC, Palm Jumeirah, and Dubai Hills Estate — and filtered to residential sales only, going back to 2023. That left about 163,000 transactions to work with.
 
 One thing that tripped me up early: DLD doesn't use the district names everyone actually calls these places. "Downtown Dubai" is registered as "Burj Khalifa." "Dubai Marina" is "Marsa Dubai." JVC, somewhat annoyingly, is split across two separate zones — "Al Barsha South Fourth" and "Al Barsha South Fifth" — which I only figured out by searching for buildings I knew were in JVC (Diamond Views, Belgravia) and checking which zone they landed in. If you're doing anything with DLD data yourself, budget time for this — the naming mismatch isn't documented anywhere obvious.
 
@@ -23,6 +23,30 @@ Using SQL (MySQL, connected through VS Code), I built a layered query — three 
 3. Uses `RANK()` to rank all six districts against each other by transaction volume, every single quarter — this became my liquidity proxy
 4. Joins in the rent and service-charge benchmarks to calculate both gross and net rental yield
 5. Combines liquidity rank and net yield into a single weighted "liquidity score" (I weighted it 60% liquidity, 40% yield — more on why below)
+
+```sql
+-- Chained CTE Architecture Overview
+WITH QuarterlyAggregates AS (
+    SELECT 
+        district_name,
+        quarter_year,
+        AVG(price_per_sqm) AS avg_price_sqm,
+        COUNT(transaction_id) AS total_transactions
+    FROM dld_transactions
+    GROUP BY district_name, quarter_year
+),
+LiquidityAndGrowth AS (
+    SELECT 
+        district_name,
+        quarter_year,
+        avg_price_sqm,
+        total_transactions,
+        LAG(avg_price_sqm) OVER (PARTITION BY district_name ORDER BY quarter_year) AS prev_price,
+        RANK() OVER (PARTITION BY quarter_year ORDER BY total_transactions DESC) AS liquidity_rank
+    FROM QuarterlyAggregates
+)
+SELECT * FROM LiquidityAndGrowth;
+
 
 The dashboard itself is built in Power BI, connected live to the MySQL database.
 
