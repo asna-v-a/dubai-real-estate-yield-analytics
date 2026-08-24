@@ -46,6 +46,7 @@ LiquidityAndGrowth AS (
     FROM QuarterlyAggregates
 )
 SELECT * FROM LiquidityAndGrowth;
+```
 
 
 The dashboard itself is built in Power BI, connected live to the MySQL database.
