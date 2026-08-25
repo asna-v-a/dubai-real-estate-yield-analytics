@@ -26,26 +26,36 @@ Using SQL (MySQL, connected through VS Code), I built a layered query — three 
 
 ```sql
 -- Chained CTE Architecture Overview
-WITH QuarterlyAggregates AS (
-    SELECT 
-        district_name,
-        quarter_year,
-        AVG(price_per_sqm) AS avg_price_sqm,
-        COUNT(transaction_id) AS total_transactions
-    FROM dld_transactions
-    GROUP BY district_name, quarter_year
+WITH district_quarter AS (
+    SELECT
+        area_name_en,
+        YEAR(instance_date_parsed) AS txn_year,
+        QUARTER(instance_date_parsed) AS txn_quarter,
+        COUNT(*) AS txn_count,
+        ROUND(AVG(meter_sale_price), 2) AS avg_price_per_sqm
+    FROM transactions_raw
+    WHERE trans_group_en = 'Sales'
+      AND property_usage_en = 'Residential'
+    GROUP BY area_name_en, YEAR(instance_date_parsed), QUARTER(instance_date_parsed)
 ),
-LiquidityAndGrowth AS (
-    SELECT 
-        district_name,
-        quarter_year,
-        avg_price_sqm,
-        total_transactions,
-        LAG(avg_price_sqm) OVER (PARTITION BY district_name ORDER BY quarter_year) AS prev_price,
-        RANK() OVER (PARTITION BY quarter_year ORDER BY total_transactions DESC) AS liquidity_rank
-    FROM QuarterlyAggregates
+growth_calc AS (
+    SELECT
+        area_name_en,
+        txn_year,
+        txn_quarter,
+        txn_count,
+        avg_price_per_sqm,
+        LAG(avg_price_per_sqm) OVER (
+            PARTITION BY area_name_en ORDER BY txn_year, txn_quarter
+        ) AS prev_quarter_price,
+        RANK() OVER (
+            PARTITION BY txn_year, txn_quarter ORDER BY txn_count DESC
+        ) AS velocity_rank_that_quarter
+    FROM district_quarter
 )
-SELECT * FROM LiquidityAndGrowth;
+-- ...continues with a third CTE joining rent and service charge 
+-- benchmarks to calculate net yield, plus a final weighted 
+-- liquidity score. Full query in /sql/01_yield_analysis.sql
 ```
 
 

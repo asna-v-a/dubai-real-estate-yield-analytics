@@ -18,7 +18,7 @@ SQL + Power BI analysis evaluating net rental yield, price appreciation, and tra
 
 ## 📖 Case Study & Methodology
 
-For a complete breakdown of data cleaning steps, MySQL queries, DAX yield formulas, and analytical trade-offs, read the full case study:
+For a complete breakdown of data cleaning steps, MySQL queries, yield formulas, and analytical trade-offs, read the full case study:
 
 👉 **[Read Full Case Study (case_study.md)](case_study.md)**
 
@@ -28,7 +28,7 @@ For a complete breakdown of data cleaning steps, MySQL queries, DAX yield formul
 
 * **Database & Transformation:** MySQL (CTEs, Window Functions, Aggregations)
 * **Data Processing:** Python (pandas, SQLAlchemy)
-* **Visualization:** Power BI Desktop (DAX, Custom Dark Theme)
+* **Visualization:** Power BI Desktop (custom SQL-connected data model, dark theme UI design)
 * **Version Control:** Git & GitHub
 
 ---
@@ -39,3 +39,9 @@ For a complete breakdown of data cleaning steps, MySQL queries, DAX yield formul
 * `notebooks/`: Python notebooks for data merging and inspection.
 * `sql/`: Production SQL scripts for yield and liquidity calculations.
 * `case_study.md`: Detailed analytical narrative and project breakdown.
+
+---
+
+## Data
+Full dataset not included due to file size (500MB+ raw). Source data is publicly available at https://dubailand.gov.ae/en/open-data/real-estate-data/. 
+A 500-row sample is included at `data/clean/transactions_sample.csv`.
